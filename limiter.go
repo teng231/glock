@@ -12,7 +12,14 @@ import (
 
 // Copyright (c) 2017 Pavel Pravosud
 // https://github.com/rwz/redis-gcra/blob/master/vendor/perform_gcra_ratelimit.lua
-
+type ILimiter interface {
+	// Allow is access comming request and increase counter
+	Allow(key string, per string, count int) error
+	// Immediate reset counter
+	Reset(key string) error
+	// Allow using with duration = day
+	AllowInDay(key string, count int) error
+}
 type Limiter struct {
 	client   *redis.Client
 	timelock time.Duration
@@ -50,7 +57,6 @@ func (r *Limiter) Allow(key string, per string, count int) error {
 		if res.Allowed == 0 {
 			return errors.New(Restricted)
 		}
-		break
 	case Minute:
 		res, err := r.limiter.Allow(ctx, key, redis_rate.PerMinute(count))
 		if err != nil {
@@ -60,7 +66,6 @@ func (r *Limiter) Allow(key string, per string, count int) error {
 		if res.Allowed == 0 {
 			return errors.New(Restricted)
 		}
-		break
 	case Hour:
 		res, err := r.limiter.Allow(ctx, key, redis_rate.PerHour(count))
 		if err != nil {
@@ -70,7 +75,6 @@ func (r *Limiter) Allow(key string, per string, count int) error {
 		if res.Allowed == 0 {
 			return errors.New(Restricted)
 		}
-		break
 	case Day:
 		return r.AllowInDay(key, count)
 	}

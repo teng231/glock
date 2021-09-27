@@ -2,6 +2,11 @@ package glock
 
 import "sync"
 
+type IKmutex interface {
+	Lock(key interface{})
+	Unlock(key interface{})
+}
+
 // Kmutex Can be locked by unique ID
 type Kmutex struct {
 	c *sync.Cond
@@ -38,7 +43,6 @@ func (km *Kmutex) Lock(key interface{}) {
 		km.c.Wait()
 	}
 	km.s[key] = struct{}{}
-	return
 }
 
 // satisfy sync.Locker interface

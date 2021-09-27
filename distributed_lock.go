@@ -10,9 +10,12 @@ import (
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 )
 
-// func init() {
-// 	log.SetFlags(log.Lshortfile)
-// }
+type IDistributedLock interface {
+	// Lock is close request in. Lock all request come to the gate
+	Lock(key string) (*LockContext, error)
+	// Unlock release the gate
+	Unlock(lc *LockContext) error
+}
 
 type DistributedLock struct {
 	sync     *redsync.Redsync

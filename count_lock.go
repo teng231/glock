@@ -10,6 +10,16 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type ICountLock interface {
+	// Start is config start
+	Start(key interface{}, startWith int, expired time.Duration) error
+	// DecrBy decrease count
+	DecrBy(key interface{}, count int64) (int, error)
+	// Current get current count
+	Current(key interface{}) (int, error)
+	// IncrBy increase count
+	IncrBy(key interface{}, count int64) (int, error)
+}
 type CountLock struct {
 	client   *redis.Client
 	timelock time.Duration

@@ -9,6 +9,21 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type IDistributedQueue interface {
+	// Push to the left
+	Unshift(key string, values ...interface{}) error
+	// Push to the right
+	Push(key string, values ...interface{}) error
+	// release 1 item right
+	Pop(key string, out interface{}) error
+	// release 1 item right
+	Shift(key string, out interface{}) error
+	// List item in list
+	List(key string, start, stop int64, f func([]string) error) error
+	// Size get current size of list
+	Size(key string) (int64, error)
+}
+
 type DistributedQueue struct {
 	client   *redis.Client
 	prefix   string
@@ -41,7 +56,7 @@ func (q *DistributedQueue) Set(key string, values ...interface{}) error {
 	if err := q.client.Del(ctx, q.prefix+key).Err(); err != nil {
 		return err
 	}
-	if values != nil && len(values) > 0 {
+	if len(values) > 0 {
 		inputs := []string{}
 		for _, val := range values {
 			bin, _ := json.Marshal(val)

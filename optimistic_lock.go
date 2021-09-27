@@ -8,6 +8,11 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type IOptimisticLock interface {
+	Lock(key string, otherDuration ...time.Duration) error
+	Unlock(key string) error
+}
+
 type OptimisticLock struct {
 	client   *redis.Client
 	prefix   string
