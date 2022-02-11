@@ -28,6 +28,36 @@ type LockContext struct {
 	ctx   context.Context
 }
 
+func StartDistributedLock(cf *ConnectConfig) (*DistributedLock, error) {
+	client := redis.NewClient(&redis.Options{
+		Password:        cf.RedisPw,
+		Addr:            cf.RedisAddr,
+		MaxRetries:      10,
+		MinRetryBackoff: 15 * time.Millisecond,
+		MaxRetryBackoff: 1000 * time.Millisecond,
+		DialTimeout:     10 * time.Second,
+		PoolSize:        1000,
+		DB:              cf.RedisDb, // use default DB
+	})
+	if cf.Timelock < 0 {
+		return nil, errors.New("timelock is required")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), cf.Timelock)
+	defer cancel()
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+	pool := goredis.NewPool(client)
+
+	rs := redsync.New(pool)
+	return &DistributedLock{
+		sync:     rs,
+		timelock: cf.Timelock,
+		prefix:   cf.Prefix,
+	}, nil
+}
+
+// CreateDistributedLock deprecated
 func CreateDistributedLock(addr, pw, prefix string, timelock time.Duration) (*DistributedLock, error) {
 	client := redis.NewClient(&redis.Options{
 		Password:        pw,

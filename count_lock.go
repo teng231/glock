@@ -26,6 +26,33 @@ type CountLock struct {
 	prefix   string
 }
 
+// StartCountLock
+func StartCountLock(cf *ConnectConfig) (*CountLock, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:            cf.RedisAddr,
+		Password:        cf.RedisPw,
+		MaxRetries:      10,
+		MinRetryBackoff: 15 * time.Millisecond,
+		MaxRetryBackoff: 1000 * time.Millisecond,
+		DialTimeout:     10 * time.Second,
+		DB:              cf.RedisDb, // use default DB
+	})
+	if cf.Timelock < 0 {
+		return nil, errors.New("timelock is required")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), cf.Timelock)
+	defer cancel()
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+	return &CountLock{
+		client:   client,
+		prefix:   cf.Prefix,
+		timelock: cf.Timelock,
+	}, nil
+}
+
+// CreateCountLock deprecated
 func CreateCountLock(redisAddr, redisPw, prefix string, timelock time.Duration) (*CountLock, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:            redisAddr,

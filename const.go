@@ -1,5 +1,7 @@
 package glock
 
+import "time"
+
 const (
 	StatusLocked         = "locked"
 	StatusNotPersist     = "error_persist"
@@ -8,3 +10,11 @@ const (
 	Empty                = "empty"
 	CantParse            = "can't parse"
 )
+
+type ConnectConfig struct {
+	RedisAddr string
+	RedisPw   string
+	Prefix    string
+	Timelock  time.Duration
+	RedisDb   int
+}

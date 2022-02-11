@@ -34,6 +34,17 @@ const (
 	Restricted = "restricted"
 )
 
+func StartLimiter(cf *ConnectConfig) (*Limiter, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     cf.RedisAddr,
+		Password: cf.RedisPw, // no password set
+		DB:       cf.RedisDb, // use default DB
+	})
+	limiter := redis_rate.NewLimiter(client)
+	return &Limiter{client, cf.Timelock, limiter}, nil
+}
+
+// CreateLimiter deprecated
 func CreateLimiter(addr, pw string, timelock time.Duration) (*Limiter, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,

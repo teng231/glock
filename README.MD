@@ -18,7 +18,13 @@ Helpful for count turn.
 
 ``` go
 func Run(){
-	cd, err := CreateCountLock("localhost:6379", "", "test3_", time.Minute)
+	cd, err := StartCountLock(&ConnectConfig{
+		RedisAddr:"localhost:6379",
+		RedisPw: "",
+		Prefix: "test3_",
+		Timelock: time.Minute,
+		RedisDb: 1,
+	})
 	if err != nil {
 		log.Print(err)
 		t.Fail()
@@ -39,7 +45,13 @@ If 2 request going at the same time. Fist request come run and when its done. Se
 
 ``` go
 func Run(){
-	dl, err := CreateDistributedLock("localhost:6379", "", "test2_", 4*time.Second)
+	dl, err := StartDistributedLock(&ConnectConfig{
+		RedisAddr:"localhost:6379",
+		RedisPw: "",
+		Prefix: "test3_",
+		Timelock: time.Minute,
+		RedisDb: 1,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +84,12 @@ handler limit like counter lock. but have duration
 
 ``` go
 func Run(){
-    r, err := CreateLimiter("localhost:6379", "", 2*time.Second)
+    r, err := StartLimiter(&ConnectConfig{
+		RedisAddr:"localhost:6379",
+		RedisPw: "",
+		Timelock: time.Minute,
+		RedisDb: 1,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -110,7 +127,14 @@ Redis will lower traffics
 
 ``` go
 func Run(){
-    ol, err := CreateOptimisticLock("localhost:6379", "", "test_", time.Second)
+    ol, err := StartOptimisticLock(&ConnectConfig{
+		RedisAddr:"localhost:6379",
+		RedisPw: "",
+		Prefix: "test3_",
+		Timelock: time.Minute,
+		RedisDb: 1,
+	}
+	)
 	if err != nil {
 		panic(err)
 	}

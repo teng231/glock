@@ -19,6 +19,32 @@ type OptimisticLock struct {
 	timelock time.Duration
 }
 
+func StartOptimisticLock(cf *ConnectConfig) (*OptimisticLock, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:            cf.RedisAddr,
+		Password:        cf.RedisPw,
+		MaxRetries:      10,
+		MinRetryBackoff: 15 * time.Millisecond,
+		MaxRetryBackoff: 1000 * time.Millisecond,
+		DialTimeout:     10 * time.Second,
+		DB:              cf.RedisDb, // use default DB
+	})
+	if cf.Timelock < 0 {
+		return nil, errors.New("timelock is required")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), cf.Timelock)
+	defer cancel()
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+	return &OptimisticLock{
+		client,
+		cf.Prefix,
+		cf.Timelock,
+	}, nil
+}
+
+// CreateOptimisticLock deprecated
 func CreateOptimisticLock(addr, pw, prefix string, timelock time.Duration) (*OptimisticLock, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:            addr,
