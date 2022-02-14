@@ -1,6 +1,8 @@
 # Glock
 all lock module and ratelimit using redis for controll.
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/princjef/gomarkdoc.svg)](https://pkg.go.dev/github.com/teng231/glock)
+
 ## install
 
 ``` bash
