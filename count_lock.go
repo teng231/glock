@@ -19,6 +19,8 @@ type ICountLock interface {
 	Current(key interface{}) (int, error)
 	// IncrBy increase count
 	IncrBy(key interface{}, count int64) (int, error)
+	// IncrBy stop counter
+	StopCounter(key interface{}) error
 }
 type CountLock struct {
 	client   *redis.Client
@@ -138,4 +140,16 @@ func (cl *CountLock) IncrBy(key interface{}, count int64) (int, error) {
 		return 0, err
 	}
 	return int(curVal), nil
+}
+
+func (cl *CountLock) StopCounter(key interface{}) error {
+	ctx, cancel := context.WithTimeout(context.Background(), cl.timelock)
+	defer cancel()
+
+	rdKey := fmt.Sprintf("%s_%v", cl.prefix, key)
+	err := cl.client.Del(ctx, rdKey).Err()
+	if err != nil {
+		return err
+	}
+	return err
 }
