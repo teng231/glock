@@ -95,7 +95,8 @@ func (r *Limiter) Allow(key string, per string, count int) error {
 func (r *Limiter) Reset(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
 	defer cancel()
-	return r.client.Del(ctx, key).Err()
+	// return r.client.Del(ctx, key).Err()
+	return r.limiter.Reset(ctx, key)
 }
 
 func (r *Limiter) AllowInDay(key string, count int) error {
