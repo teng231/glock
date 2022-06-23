@@ -20,6 +20,7 @@ type ILimiter interface {
 	Reset(key string) error
 	// Allow using with duration = day
 	AllowInDay(key string, count int) error
+	AllowInWeek(key string, count int) error
 }
 type Limiter struct {
 	client   *redis.Client
