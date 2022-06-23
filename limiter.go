@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/redis_rate/v9"
+	"github.com/golang-module/carbon/v2"
 )
 
 // Copyright (c) 2017 Pavel Pravosud
@@ -31,6 +32,7 @@ const (
 	Minute     = "minute"
 	Hour       = "hour"
 	Day        = "day"
+	Week       = "week"
 	Restricted = "restricted"
 )
 
@@ -88,6 +90,8 @@ func (r *Limiter) Allow(key string, per string, count int) error {
 		}
 	case Day:
 		return r.AllowInDay(key, count)
+	case Week:
+		return r.AllowInWeek(key, count)
 	}
 	return nil
 }
@@ -102,12 +106,47 @@ func (r *Limiter) Reset(key string) error {
 func (r *Limiter) AllowInDay(key string, count int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
 	defer cancel()
-	t := time.Now()
-	key = fmt.Sprintf("%s_%v", key, t.Unix()/(3600*24))
-	timeRemaining := 3600*24 - (60*60*t.Hour() + 60*t.Minute() + t.Second())
-	if err := r.client.SetNX(ctx, key, count, time.Duration(timeRemaining)*time.Second).Err(); err != nil {
+	now := time.Now()
+	endOfday := carbon.Time2Carbon(now).EndOfDay()
+	secs := carbon.Time2Carbon(now).DiffAbsInSeconds(endOfday)
+	key = fmt.Sprintf("%s_%d", key, secs)
+	currentValue, err := r.client.Get(ctx, key).Int64()
+	if err == redis.Nil {
+		if err := r.client.SetNX(ctx, key, count, time.Duration(secs)*time.Second).Err(); err != nil {
+			return err
+		}
+		currentValue, _ = r.client.Get(ctx, key).Int64()
+	}
+	if currentValue <= 0 {
+		return errors.New(Restricted)
+	}
+	remain, err := r.client.Decr(ctx, key).Result()
+	if err != nil {
 		return err
 	}
+	if remain < 0 {
+		return errors.New(Restricted)
+	}
+	return nil
+}
+
+func (r *Limiter) AllowInWeek(key string, count int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
+	defer cancel()
+	now := time.Now()
+	weekDay := carbon.Time2Carbon(now).SetWeekStartsAt(carbon.Monday).EndOfWeek()
+	hours := carbon.Time2Carbon(now).DiffAbsInHours(weekDay)
+	currentValue, err := r.client.Get(ctx, key).Int64()
+	if err == redis.Nil {
+		if err := r.client.SetNX(ctx, key, count, time.Duration(hours)*time.Hour).Err(); err != nil {
+			return err
+		}
+		currentValue, _ = r.client.Get(ctx, key).Int64()
+	}
+	if currentValue <= 0 {
+		return errors.New(Restricted)
+	}
+
 	remain, err := r.client.Decr(ctx, key).Result()
 	if err != nil {
 		return err

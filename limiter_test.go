@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/golang-module/carbon/v2"
 )
 
 func TestAllowSec(t *testing.T) {
@@ -111,4 +113,19 @@ func TestAllowInDay(t *testing.T) {
 	if err := r.Allow("key8", Day, 5); err != nil {
 		log.Print(err)
 	}
+}
+
+func TestDiff2Day(t *testing.T) {
+	now := time.Now()
+
+	weekDay := carbon.Time2Carbon(now).SetWeekStartsAt(carbon.Monday).EndOfWeek()
+	hours := carbon.Time2Carbon(now).DiffAbsInHours(weekDay)
+	log.Print("weekDay:", weekDay, " hours: ", hours)
+}
+
+func TestDiff2Hour(t *testing.T) {
+	now := time.Now()
+	endOfday := carbon.Time2Carbon(now).EndOfDay()
+	secs := carbon.Time2Carbon(now).DiffAbsInSeconds(endOfday)
+	log.Print("end of day:", endOfday, " hours: ", secs)
 }
