@@ -17,4 +17,9 @@ type ConnectConfig struct {
 	Prefix    string
 	Timelock  time.Duration
 	RedisDb   int
+	// for distributed lock
+	MaxRetries      int
+	MinRetryBackoff time.Duration
+	MaxRetryBackoff time.Duration
+	PoolSize        int
 }

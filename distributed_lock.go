@@ -29,14 +29,26 @@ type LockContext struct {
 }
 
 func StartDistributedLock(cf *ConnectConfig) (*DistributedLock, error) {
+	if cf.MaxRetries == 0 {
+		cf.MaxRetries = 10
+	}
+	if cf.MinRetryBackoff == 0 {
+		cf.MinRetryBackoff = 50 * time.Millisecond
+	}
+	if cf.MaxRetryBackoff == 0 {
+		cf.MaxRetryBackoff = 2 * time.Second
+	}
+	if cf.PoolSize == 0 {
+		cf.PoolSize = 1000
+	}
 	client := redis.NewClient(&redis.Options{
 		Password:        cf.RedisPw,
 		Addr:            cf.RedisAddr,
-		MaxRetries:      10,
-		MinRetryBackoff: 15 * time.Millisecond,
-		MaxRetryBackoff: 1000 * time.Millisecond,
+		MaxRetries:      cf.MaxRetries,
+		MinRetryBackoff: cf.MinRetryBackoff,
+		MaxRetryBackoff: cf.MaxRetryBackoff,
 		DialTimeout:     10 * time.Second,
-		PoolSize:        1000,
+		PoolSize:        cf.PoolSize,
 		DB:              cf.RedisDb, // use default DB
 	})
 	if cf.Timelock < 0 {

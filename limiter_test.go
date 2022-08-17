@@ -9,6 +9,16 @@ import (
 	"github.com/golang-module/carbon/v2"
 )
 
+func TestAllowhour(t *testing.T) {
+	r, err := CreateLimiter("localhost:6379", "", 2*time.Second)
+	if err != nil {
+		panic(err)
+	}
+	if err := r.Allow("key2", Hour, 5); err != nil {
+		log.Print(err)
+	}
+
+}
 func TestAllowSec(t *testing.T) {
 	r, err := CreateLimiter("localhost:6379", "", 2*time.Second)
 	if err != nil {
