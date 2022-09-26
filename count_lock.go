@@ -17,6 +17,8 @@ type ICountLock interface {
 	DecrBy(key interface{}, count int64) (int, error)
 	// Current get current count
 	Current(key interface{}) (int, error)
+	// Existed check key existed
+	Existed(key interface{}) (bool, error)
 	// IncrBy increase count
 	IncrBy(key interface{}, count int64) (int, error)
 	// IncrBy stop counter
@@ -152,4 +154,19 @@ func (cl *CountLock) StopCounter(key interface{}) error {
 		return err
 	}
 	return err
+}
+
+func (cl *CountLock) Existed(key interface{}) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), cl.timelock)
+	defer cancel()
+
+	rdKey := fmt.Sprintf("%s_%v", cl.prefix, key)
+	val, err := cl.client.Exists(ctx, rdKey).Result()
+	if err != nil {
+		return false, err
+	}
+	if val == 0 {
+		return false, nil
+	}
+	return true, nil
 }

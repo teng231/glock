@@ -14,7 +14,7 @@ import (
 	go test -bench BenchmarkDistributedLock10000t  -benchmem
 ?*/
 func TestDistributeLock(t *testing.T) {
-	dl, err := CreateDistributedLock("localhost:6379", "", "test2_", 4*time.Second)
+	dl, err := CreateDistributedLock("localhost:6379", "", "test2_", 100*time.Second)
 	if err != nil {
 		panic(err)
 	}
