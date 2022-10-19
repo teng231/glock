@@ -142,8 +142,8 @@ func (r *Limiter) AllowInWeek(key string, count int) error {
 	now := carbon.Now(r.tz)
 	endOfWeekday := now.SetWeekStartsAt(carbon.Monday).EndOfWeek().EndOfDay()
 	hours := now.DiffAbsInHours(endOfWeekday) + 1
-	// formula: wts := (ts / 86400 - 4) / 7 | because: 1/1/1970 is thus
-	key = fmt.Sprintf("%s_%d", key, (now.Carbon2Time().Unix()/86400-4)/7)
+	// formula: wts := (ts / 86400 + 3) / 7 | because: 1/1/1970 is thus
+	key = fmt.Sprintf("%s_%d", key, (now.Carbon2Time().Unix()/86400+3)/7)
 	currentValue, err := r.client.Get(ctx, key).Int64()
 	if err == redis.Nil {
 		if err := r.client.SetNX(ctx, key, count, time.Duration(hours)*time.Hour).Err(); err != nil {
