@@ -100,14 +100,15 @@ func BenchmarkAllow10000tMiltiple(t *testing.B) {
 }
 
 func TestAllowInDay(t *testing.T) {
-	r, err := CreateLimiter("localhost:6379", "", 2*time.Second)
-	if err != nil {
-		panic(err)
-	}
+	r, _ := StartLimiter(&ConnectConfig{
+		RedisAddr: "localhost:6379",
+		Timelock:  2 * time.Second,
+	})
 	r.Reset("rate:key8")
 	if err := r.Allow("key8", Day, 5); err != nil {
 		log.Print(err)
 	}
+	time.Sleep(2 * time.Second)
 	if err := r.Allow("key8", Day, 5); err != nil {
 		log.Print(err)
 	}

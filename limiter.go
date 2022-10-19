@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -26,6 +27,7 @@ type Limiter struct {
 	client   *redis.Client
 	timelock time.Duration
 	limiter  *redis_rate.Limiter
+	tz       string // timezone
 }
 
 const (
@@ -44,7 +46,10 @@ func StartLimiter(cf *ConnectConfig) (*Limiter, error) {
 		DB:       cf.RedisDb, // use default DB
 	})
 	limiter := redis_rate.NewLimiter(client)
-	return &Limiter{client, cf.Timelock, limiter}, nil
+	if cf.Timezone == "" {
+		cf.Timezone = "Asia/Ho_Chi_Minh"
+	}
+	return &Limiter{client, cf.Timelock, limiter, cf.Timezone}, nil
 }
 
 // CreateLimiter deprecated
@@ -55,7 +60,7 @@ func CreateLimiter(addr, pw string, timelock time.Duration) (*Limiter, error) {
 		DB:       1,  // use default DB
 	})
 	limiter := redis_rate.NewLimiter(client)
-	return &Limiter{client, timelock, limiter}, nil
+	return &Limiter{client, timelock, limiter, "Asia/Ho_Chi_Minh"}, nil
 }
 
 func (r *Limiter) Allow(key string, per string, count int) error {
@@ -107,13 +112,13 @@ func (r *Limiter) Reset(key string) error {
 func (r *Limiter) AllowInDay(key string, count int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
 	defer cancel()
-	now := time.Now()
-	endOfday := carbon.Time2Carbon(now).EndOfDay()
-	secs := carbon.Time2Carbon(now).DiffAbsInSeconds(endOfday)
-	key = fmt.Sprintf("%s_%d", key, secs)
+	day := carbon.Now(r.tz).Carbon2Time().Unix() / 86400
+	key = fmt.Sprintf("%s_%d", key, day)
+	log.Print(key)
 	currentValue, err := r.client.Get(ctx, key).Int64()
 	if err == redis.Nil {
-		if err := r.client.SetNX(ctx, key, count, time.Duration(secs)*time.Second).Err(); err != nil {
+		// set time expire 1 day for this key
+		if err := r.client.SetNX(ctx, key, count, 86400*time.Second).Err(); err != nil {
 			return err
 		}
 		currentValue, _ = r.client.Get(ctx, key).Int64()

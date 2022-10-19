@@ -22,4 +22,6 @@ type ConnectConfig struct {
 	MinRetryBackoff time.Duration
 	MaxRetryBackoff time.Duration
 	PoolSize        int
+	// add timezone
+	Timezone string
 }
