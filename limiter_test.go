@@ -140,3 +140,36 @@ func TestDiff2Hour(t *testing.T) {
 	secs := carbon.Time2Carbon(now).DiffAbsInSeconds(endOfday)
 	log.Print("end of day:", endOfday, " hours: ", secs)
 }
+
+func TestWeek(t *testing.T) {
+	endOfWeekday := carbon.Now().SetWeekStartsAt(carbon.Monday).EndOfWeek().EndOfDay()
+	hours := carbon.Now().DiffAbsInHours(endOfWeekday)
+	log.Print(endOfWeekday.Carbon2Time().Unix(), "  ", hours)
+}
+
+func TestAllowInWeek(t *testing.T) {
+	r, _ := StartLimiter(&ConnectConfig{
+		RedisAddr: "localhost:6379",
+		Timelock:  3 * time.Second,
+	})
+	r.Reset("key9")
+	if err := r.Allow("key9", Week, 5); err != nil {
+		log.Print(err)
+	}
+	time.Sleep(2 * time.Second)
+	if err := r.Allow("key9", Week, 5); err != nil {
+		log.Print(err)
+	}
+	if err := r.Allow("key9", Week, 5); err != nil {
+		log.Print(err)
+	}
+	if err := r.Allow("key9", Week, 5); err != nil {
+		log.Print(err)
+	}
+	if err := r.Allow("key9", Week, 5); err != nil {
+		log.Print(err)
+	}
+	if err := r.Allow("key9", Week, 5); err != nil {
+		log.Print(err)
+	}
+}
