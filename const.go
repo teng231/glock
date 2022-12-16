@@ -12,11 +12,12 @@ const (
 )
 
 type ConnectConfig struct {
-	RedisAddr string
-	RedisPw   string
-	Prefix    string
-	Timelock  time.Duration
-	RedisDb   int
+	RedisAddr     string
+	RedisPw       string
+	RedisUsername string
+	Prefix        string
+	Timelock      time.Duration
+	RedisDb       int
 	// for distributed lock
 	MaxRetries      int
 	MinRetryBackoff time.Duration

@@ -44,6 +44,7 @@ func StartDistributedLock(cf *ConnectConfig) (*DistributedLock, error) {
 	client := redis.NewClient(&redis.Options{
 		Password:        cf.RedisPw,
 		Addr:            cf.RedisAddr,
+		Username:        cf.RedisUsername,
 		MaxRetries:      cf.MaxRetries,
 		MinRetryBackoff: cf.MinRetryBackoff,
 		MaxRetryBackoff: cf.MaxRetryBackoff,

@@ -27,6 +27,7 @@ func StartOptimisticLock(cf *ConnectConfig) (*OptimisticLock, error) {
 		MinRetryBackoff: 15 * time.Millisecond,
 		MaxRetryBackoff: 1000 * time.Millisecond,
 		DialTimeout:     10 * time.Second,
+		Username:        cf.RedisUsername,
 		DB:              cf.RedisDb, // use default DB
 	})
 	if cf.Timelock < 0 {
