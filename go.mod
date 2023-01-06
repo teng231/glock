@@ -6,7 +6,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redis_rate/v9 v9.1.2
 	github.com/go-redsync/redsync/v4 v4.7.1
-	github.com/golang-module/carbon/v2 v2.1.9
+	github.com/golang-module/carbon/v2 v2.2.2
 )
 
 require (

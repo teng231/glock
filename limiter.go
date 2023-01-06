@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -20,7 +19,7 @@ type ILimiter interface {
 	// Immediate reset counter
 	Reset(key string) error
 	// Allow using with duration = day
-	AllowInDay(key string, count int) error
+	// AllowInDay(key string, count int) error
 	AllowInWeek(key string, count int) error
 }
 type Limiter struct {
@@ -95,7 +94,15 @@ func (r *Limiter) Allow(key string, per string, count int) error {
 			return errors.New(Restricted)
 		}
 	case Day:
-		return r.AllowInDay(key, count)
+		// return r.AllowInDay(key, count)
+		res, err := r.limiter.Allow(ctx, key, redis_rate.PerHour(24))
+		if err != nil {
+			return err
+		}
+		// log.Print("allowed:", res.Allowed, " remaining:", res.Remaining)
+		if res.Allowed == 0 {
+			return errors.New(Restricted)
+		}
 	case Week:
 		return r.AllowInWeek(key, count)
 	}
@@ -109,32 +116,32 @@ func (r *Limiter) Reset(key string) error {
 	return r.limiter.Reset(ctx, key)
 }
 
-func (r *Limiter) AllowInDay(key string, count int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
-	defer cancel()
-	day := carbon.Now(r.tz).Carbon2Time().Unix() / 86400
-	key = fmt.Sprintf("%s_%d", key, day)
-	log.Print(key)
-	currentValue, err := r.client.Get(ctx, key).Int64()
-	if err == redis.Nil {
-		// set time expire 1 day for this key
-		if err := r.client.SetNX(ctx, key, count, 86400*time.Second).Err(); err != nil {
-			return err
-		}
-		currentValue, _ = r.client.Get(ctx, key).Int64()
-	}
-	if currentValue <= 0 {
-		return errors.New(Restricted)
-	}
-	remain, err := r.client.Decr(ctx, key).Result()
-	if err != nil {
-		return err
-	}
-	if remain < 0 {
-		return errors.New(Restricted)
-	}
-	return nil
-}
+// func (r *Limiter) AllowInDay(key string, count int) error {
+// 	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
+// 	defer cancel()
+// 	day := carbon.Now(r.tz).Carbon2Time().Unix() / 86400
+// 	key = fmt.Sprintf("%s_%d", key, day)
+// 	log.Print(key)
+// 	currentValue, err := r.client.Get(ctx, key).Int64()
+// 	if err == redis.Nil {
+// 		// set time expire 1 day for this key
+// 		if err := r.client.SetNX(ctx, key, count, 86400*time.Second).Err(); err != nil {
+// 			return err
+// 		}
+// 		currentValue, _ = r.client.Get(ctx, key).Int64()
+// 	}
+// 	if currentValue <= 0 {
+// 		return errors.New(Restricted)
+// 	}
+// 	remain, err := r.client.Decr(ctx, key).Result()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if remain < 0 {
+// 		return errors.New(Restricted)
+// 	}
+// 	return nil
+// }
 
 func (r *Limiter) AllowInWeek(key string, count int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timelock)
